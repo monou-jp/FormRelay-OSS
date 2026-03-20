@@ -151,4 +151,4 @@ $env:PYTHONPATH="."; python tests/test_selenium.py
 
 ## 📄 ライセンス
 
-MIT License
+GNU Affero General Public License v3 (AGPLv3)

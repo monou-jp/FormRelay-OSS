@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}{% if form %}Edit Form{% else %}New Form{% endif %}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">{% if form %}Edit Form: {{ form.name }}{% else %}New Form{% endif %}</h1>
+    <a href="/forms" class="btn btn-sm btn-outline-secondary">Back to List</a>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <form action="/forms/save" method="POST">
+                    {% if form %}<input type="hidden" name="id" value="{{ form.id }}">{% endif %}
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Form ID (Unique identifier for API)</label>
+                        <input type="text" name="form_id" class="form-control" value="{{ form.form_id or '' }}" required placeholder="e.g., contact-form-v1">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Display Name</label>
+                        <input type="text" name="name" class="form-control" value="{{ form.name or '' }}" required placeholder="e.g., Main Website Contact">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Notification Emails (Comma separated)</label>
+                        <input type="text" name="notify_email" class="form-control" value="{{ form.notify_email or '' }}" required placeholder="admin@example.com, support@example.com">
+                    </div>
+
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" name="enable_email_notification" class="form-check-input" id="enableEmail" {% if not form or form.enable_email_notification %}checked{% endif %}>
+                        <label class="form-check-label" for="enableEmail">Enable Email Notification (Uncheck for CRM-only mode)</label>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Allowed Domains (Comma separated, * for all)</label>
+                        <input type="text" name="allowed_domains" class="form-control" value="{{ form.allowed_domains or '*' }}" required>
+                        <div class="form-text">CORS security check for browser submissions.</div>
+                    </div>
+
+                    <hr>
+
+                    <div class="mb-3">
+                        <label class="form-label">Email Subject Template</label>
+                        <input type="text" name="subject_template" class="form-control" value="{{ form.subject_template or 'New Submission: {form_name}' }}" required>
+                        <div class="form-text">Available variables: <code>{form_name}</code>, and any form field like <code>{name}</code>, <code>{email}</code>.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Email Body Template (Optional, uses HTML)</label>
+                        <textarea name="body_template" class="form-control" rows="5" placeholder="Leave blank for default table format.">{{ form.body_template or '' }}</textarea>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Success Redirect URL (Optional)</label>
+                            <input type="url" name="success_url" class="form-control" value="{{ form.success_url or '' }}" placeholder="https://example.com/thanks">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Cancel/Error Redirect URL (Optional)</label>
+                            <input type="url" name="cancel_url" class="form-control" value="{{ form.cancel_url or '' }}" placeholder="https://example.com/error">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Validation Rules (JSON)</label>
+                        <textarea name="validation_rules" class="form-control" rows="3" placeholder='{"required": ["name", "email"]}'>{{ form.validation_rules or '' }}</textarea>
+                        <div class="form-text">Define required fields or other rules in JSON format.</div>
+                    </div>
+
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" name="is_active" class="form-check-input" id="isActive" {% if not form or form.is_active %}checked{% endif %}>
+                        <label class="form-check-label" for="isActive">Form is Active</label>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary px-4">Save Configuration</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header bg-white">
+                <h5 class="card-title mb-0">How to use</h5>
+            </div>
+            <div class="card-body small">
+                <p>Submit your form to:</p>
+                <code>POST /api/form</code>
+                <p class="mt-3">Required field:</p>
+                <code>&lt;input type="hidden" name="form_id" value="{{ form.form_id or 'YOUR_FORM_ID' }}"&gt;</code>
+                <p class="mt-3">Honeypot (optional):</p>
+                <code>&lt;input type="text" name="_honeypot" style="display:none"&gt;</code>
+                <p class="mt-3">Redirect (optional):</p>
+                <code>&lt;input type="hidden" name="_next" value="https://example.com/thanks"&gt;</code>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

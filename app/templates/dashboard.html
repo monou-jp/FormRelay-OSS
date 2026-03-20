@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Dashboard</h1>
+</div>
+
+<div class="row">
+    <div class="col-md-3 mb-4">
+        <div class="card bg-primary text-white h-100">
+            <div class="card-body">
+                <h6 class="card-title">Today's Submissions</h6>
+                <h2 class="display-4">{{ today_count }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-4">
+        <div class="card bg-success text-white h-100">
+            <div class="card-body">
+                <h6 class="card-title">Total Submissions</h6>
+                <h2 class="display-4">{{ total_count }}</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-white">
+                <h5 class="card-title mb-0">Submission Trends (Last 7 Days)</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="submissionChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-white">
+                <h5 class="card-title mb-0">Submissions by Form</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    {% for stat in form_stats %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        {{ stat.name }}
+                        <span class="badge bg-primary rounded-pill">{{ stat.sub_count }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header bg-white">
+        <h5 class="card-title mb-0">Recent Submissions</h5>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Date</th>
+                    <th>Form</th>
+                    <th>Status</th>
+                    <th>IP Address</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sub in recent_submissions %}
+                <tr>
+                    <td>{{ sub.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                    <td><span class="badge bg-secondary">{{ sub.form.name }}</span></td>
+                    <td>
+                        <span class="badge {% if sub.status == 'new' %}bg-primary{% elif sub.status == 'in_progress' %}bg-warning text-dark{% else %}bg-success{% endif %}">
+                            {{ sub.status }}
+                        </span>
+                    </td>
+                    <td>{{ sub.ip_address }}</td>
+                    <td>
+                        <a href="/submissions/{{ sub.id }}" class="btn btn-sm btn-outline-primary">View</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const ctx = document.getElementById('submissionChart').getContext('2d');
+    const data = JSON.parse('{{ chart_data | tojson }}');
+    const labels = data.map(d => d.date);
+    const counts = data.map(d => d.count);
+
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Submissions',
+                data: counts,
+                borderColor: '#0d6efd',
+                tension: 0.1,
+                fill: true,
+                backgroundColor: 'rgba(13, 110, 253, 0.1)'
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { stepSize: 1 }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+{% block title %}Submission Detail{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Submission Details #{{ sub.id }}</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <form action="/submissions/{{ sub.id }}/resend" method="POST" class="me-2">
+            <button type="submit" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-send me-1"></i> Resend Notification
+            </button>
+        </form>
+        <a href="/submissions" class="btn btn-sm btn-outline-primary">Back to List</a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header bg-white">
+                <h5 class="card-title mb-0">Form Data</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-bordered">
+                    {% for key, val in data.items() %}
+                    <tr>
+                        <th class="bg-light" style="width: 200px;">{{ key }}</th>
+                        <td>{{ val or '' }}</td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
+        </div>
+
+        {% if attachments %}
+        <div class="card mb-4">
+            <div class="card-header bg-white">
+                <h5 class="card-title mb-0">Attachments</h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group">
+                    {% for att in attachments %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <i class="bi bi-file-earmark me-2"></i>
+                            {{ att.original_name }} ({{ (att.size / 1024) | round(1) }} KB)
+                        </div>
+                        <a href="/uploads/{{ att.filename }}" class="btn btn-sm btn-primary">Download</a>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="card mb-4">
+            <div class="card-header bg-white">
+                <h5 class="card-title mb-0">Email Logs</h5>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-sm mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Sent At</th>
+                            <th>Recipient</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in mail_logs %}
+                        <tr>
+                            <td>{{ log.sent_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td>{{ log.recipient }}</td>
+                            <td>
+                                <span class="badge {% if log.status == 'success' %}bg-success{% else %}bg-danger{% endif %}">
+                                    {{ log.status }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header bg-white">
+                <h5 class="card-title mb-0">CRM / Status</h5>
+            </div>
+            <div class="card-body">
+                <form action="/submissions/{{ sub.id }}/status" method="POST">
+                    <div class="mb-3">
+                        <label class="form-label">Status</label>
+                        <select name="status" class="form-select">
+                            <option value="new" {{ 'selected' if sub.status == 'new' else '' }}>New</option>
+                            <option value="in_progress" {{ 'selected' if sub.status == 'in_progress' else '' }}>In Progress</option>
+                            <option value="completed" {{ 'selected' if sub.status == 'completed' else '' }}>Completed</option>
+                            <option value="spam" {{ 'selected' if sub.status == 'spam' else '' }}>Spam</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Internal Note</label>
+                        <textarea name="note" class="form-control" rows="3" placeholder="Add a note..."></textarea>
+                    </div>
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" name="notify_change" class="form-check-input" id="notifyChange">
+                        <label class="form-check-label" for="notifyChange">Notify by Email (if changed)</label>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Update Status</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header bg-white">
+                <h5 class="card-title mb-0">System Info</h5>
+            </div>
+            <div class="card-body small">
+                <p class="mb-1"><strong>Submitted:</strong> {{ sub.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+                <p class="mb-1"><strong>IP:</strong> {{ sub.ip_address }}</p>
+                <p class="mb-1"><strong>UA:</strong> {{ sub.user_agent }}</p>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header bg-white">
+                <h5 class="card-title mb-0">Status History</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    {% for h in history %}
+                    <div class="list-group-item p-3">
+                        <div class="d-flex justify-content-between small text-muted mb-1">
+                            <span>{{ h.created_at.strftime('%m-%d %H:%M') }}</span>
+                            <span>{{ h.created_by.username if h.created_by else 'System' }}</span>
+                        </div>
+                        <div><strong>{{ h.old_status }}</strong> &rarr; <strong>{{ h.new_status }}</strong></div>
+                        {% if h.note %}
+                        <div class="small mt-1 text-secondary italic">{{ h.note }}</div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

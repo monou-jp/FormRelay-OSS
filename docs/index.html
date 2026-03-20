@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FormRelay - セキュア＆高機能な自前フォーム管理サーバー</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <style>
+        .gradient-text {
+            background: linear-gradient(90deg, #6366f1, #a855f7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 font-sans leading-relaxed">
+
+    <!-- Navbar -->
+    <nav class="fixed w-full z-50 bg-white shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold">F</div>
+                    <span class="text-xl font-bold tracking-tight text-slate-900">FormRelay</span>
+                </div>
+                <div class="hidden md:flex items-center gap-8">
+                    <a href="#features" class="text-slate-900 hover:text-indigo-600 transition font-bold">機能</a>
+                    <a href="#test-reliability" class="text-slate-900 hover:text-indigo-600 transition font-bold">信頼性</a>
+                    <a href="#advanced-config" class="text-slate-900 hover:text-indigo-600 transition font-bold">設定方法</a>
+                    <a href="https://github.com/live/FormRelay-OSS" class="bg-indigo-600 text-white px-5 py-2 rounded-full font-bold hover:bg-indigo-700 transition shadow-md shadow-indigo-200">GitHub</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <header class="pt-32 pb-20 px-4 text-center">
+        <div class="max-w-4xl mx-auto">
+            <div class="inline-flex items-center gap-2 bg-white/20 text-white px-4 py-1.5 rounded-full text-sm font-semibold mb-6 backdrop-blur-sm">
+                <span class="relative flex h-2 w-2">
+                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                  <span class="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+                </span>
+                OSS フォームリレーシステム
+            </div>
+            <h1 class="text-5xl md:text-7xl font-extrabold mb-6 tracking-tight text-white drop-shadow-sm">
+                あなたのフォームを、<br><span class="text-indigo-100">もっと自由に、安全に。</span>
+            </h1>
+            <p class="text-xl text-indigo-50 max-w-2xl mx-auto mb-10 leading-relaxed font-medium">
+                複数のドメインから送信されるフォームを単一APIで集約。
+                Seleniumによる厳密なテストをクリアした、堅牢な自己完結型管理システム。
+            </p>
+            <div class="flex flex-col sm:flex-row justify-center gap-4">
+                <a href="#get-started" class="bg-indigo-600 text-white font-bold py-4 px-10 rounded-2xl shadow-xl shadow-indigo-200 hover:bg-indigo-700 hover:-translate-y-1 transition-all duration-300">今すぐデプロイする</a>
+                <a href="https://github.com/live/FormRelay-OSS" class="bg-white text-slate-700 font-bold py-4 px-10 rounded-2xl border border-slate-200 hover:bg-slate-50 hover:border-slate-300 transition-all duration-300 flex items-center justify-center gap-2">
+                    <i class="fab fa-github text-xl"></i> スターを付ける
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Key Features -->
+    <section id="features" class="py-24 bg-white">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-bold mb-4">ただ受信するだけではありません</h2>
+                <p class="text-slate-500 max-w-2xl mx-auto">運用に必要なセキュリティ、CRM、通知機能が最初からすべて揃っています。</p>
+            </div>
+            <div class="grid md:grid-cols-3 gap-8">
+                <!-- Security -->
+                <div class="feature-card p-8 bg-slate-50 rounded-3xl border border-slate-100">
+                    <div class="w-14 h-14 bg-indigo-600 text-white rounded-2xl flex items-center justify-center mb-6 text-2xl shadow-lg shadow-indigo-100">
+                        <i class="fas fa-shield-virus"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3 text-slate-800">鉄壁の多層防御</h3>
+                    <p class="text-slate-600 leading-relaxed">Honeypot, IPレート制限, reCAPTCHA v2, CORS制御。悪質なスパムボットを入口で完全にシャットアウトします。</p>
+                </div>
+                <!-- CRM -->
+                <div class="feature-card p-8 bg-slate-50 rounded-3xl border border-slate-100">
+                    <div class="w-14 h-14 bg-emerald-500 text-white rounded-2xl flex items-center justify-center mb-6 text-2xl shadow-lg shadow-emerald-100">
+                        <i class="fas fa-user-tie"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3 text-slate-800">CRMダッシュボード</h3>
+                    <p class="text-slate-600 leading-relaxed">送信データをステータス管理（未対応/対応中/完了）。添付ファイルも管理画面から安全にプレビュー・DL可能です。</p>
+                </div>
+                <!-- Email -->
+                <div class="feature-card p-8 bg-slate-50 rounded-3xl border border-slate-100">
+                    <div class="w-14 h-14 bg-amber-500 text-white rounded-2xl flex items-center justify-center mb-6 text-2xl shadow-lg shadow-amber-100">
+                        <i class="fas fa-magic"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3 text-slate-800">柔軟なテンプレート</h3>
+                    <p class="text-slate-600 leading-relaxed">フォームごとに通知先やメール件名・本文テンプレートを自在に設定。送信データに基づいた動的なメール送信が可能です。</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Test Reliability -->
+    <section id="test-reliability" class="py-24 bg-slate-900 text-white overflow-hidden relative">
+        <div class="absolute top-0 right-0 -translate-y-1/2 translate-x-1/3 w-96 h-96 bg-indigo-600/20 blur-[120px] rounded-full"></div>
+        <div class="max-w-7xl mx-auto px-4 relative z-10">
+            <div class="grid md:grid-cols-2 gap-16 items-center">
+                <div>
+                    <div class="badge-test mb-6">
+                        <i class="fas fa-check-double"></i> Verified by Selenium
+                    </div>
+                    <h2 class="text-4xl font-bold mb-6 leading-tight text-white">「動いて当たり前」を、<br>厳密なテストで保証。</h2>
+                    <p class="text-slate-400 mb-8 leading-relaxed">
+                        FormRelayは、単なるAPIテストだけでなく、実際のブラウザを模倣した<strong>SeleniumによるE2Eテスト</strong>をパスしています。
+                        境界値テストから複雑な管理画面の操作フローまで、あらゆるユースケースを想定して検証されています。
+                    </p>
+                    <ul class="space-y-4">
+                        <li class="flex items-center gap-3">
+                            <div class="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-500 flex items-center justify-center text-xs">
+                                <i class="fas fa-check"></i>
+                            </div>
+                            <span>ブラウザ挙動を再現したシミュレーションテスト</span>
+                        </li>
+                        <li class="flex items-center gap-3">
+                            <div class="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-500 flex items-center justify-center text-xs">
+                                <i class="fas fa-check"></i>
+                            </div>
+                            <span>最大負荷・境界値を想定したストレステスト</span>
+                        </li>
+                        <li class="flex items-center gap-3">
+                            <div class="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-500 flex items-center justify-center text-xs">
+                                <i class="fas fa-check"></i>
+                            </div>
+                            <span>管理画面のCRUD操作、ログイン、権限フローの検証</span>
+                        </li>
+                    </ul>
+                </div>
+                <div class="code-window">
+                    <div class="code-header">
+                        <div class="dot dot-red"></div>
+                        <div class="dot dot-yellow"></div>
+                        <div class="dot dot-green"></div>
+                        <span class="ml-2 text-xs text-slate-400 font-mono">tests/test_selenium.py</span>
+                    </div>
+                    <div class="p-6 font-mono text-sm leading-6 text-indigo-300 overflow-x-auto">
+                        <div class="flex gap-4">
+                            <span class="text-slate-600 select-none">110</span>
+                            <span class="text-indigo-400">def</span> <span class="text-emerald-400">test_normal_submission</span>(self):
+                        </div>
+                        <div class="flex gap-4">
+                            <span class="text-slate-600 select-none">111</span>
+                            &nbsp;&nbsp;&nbsp;&nbsp;driver = self.driver
+                        </div>
+                        <div class="flex gap-4">
+                            <span class="text-slate-600 select-none">121</span>
+                            &nbsp;&nbsp;&nbsp;&nbsp;driver.find_element(By.ID, <span class="text-amber-300">"submit-btn"</span>).click()
+                        </div>
+                        <div class="flex gap-4">
+                            <span class="text-slate-600 select-none">125</span>
+                            &nbsp;&nbsp;&nbsp;&nbsp;self.assertEqual(driver.current_url, <span class="text-emerald-300">'.../success'</span>)
+                        </div>
+                        <div class="mt-4 flex gap-4 text-emerald-400 font-bold italic">
+                            <span class="text-slate-600 select-none">>>></span>
+                            <span>Tests Passed: 12 cases, 0 failures</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Advanced Configuration -->
+    <section id="advanced-config" class="py-24 bg-slate-50">
+        <div class="max-w-4xl mx-auto px-4">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl font-bold mb-4">高度なパラメータ設定</h2>
+                <p class="text-slate-500">送信後のリダイレクトやセキュリティ設定をHTML側から制御できます。</p>
+            </div>
+            
+            <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="flex border-b border-slate-100">
+                    <button class="tab-btn active px-8 py-4 font-bold text-sm border-b-2 border-indigo-600 text-indigo-600 transition-all" data-tab="redirect">
+                        リダイレクト設定
+                    </button>
+                    <button class="tab-btn px-8 py-4 font-bold text-sm border-b-2 border-transparent text-slate-500 hover:text-slate-800 transition-all" data-tab="security">
+                        スパム対策
+                    </button>
+                </div>
+                
+                <div id="tab-redirect" class="tab-content p-8">
+                    <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+                        <code class="bg-indigo-50 text-indigo-700 px-2 py-1 rounded">_next</code> パラメータ
+                    </h3>
+                    <p class="text-slate-600 mb-6 leading-relaxed">
+                        フォーム送信が成功した後のリダイレクト先を指定します。管理画面で設定したURLよりも優先されます。
+                    </p>
+                    <div class="bg-slate-900 rounded-xl p-6 overflow-x-auto">
+                        <code class="text-indigo-300">
+                            &lt;input type="hidden" name="<span class="text-emerald-400">_next</span>" value="<span class="text-amber-300">https://your-site.com/thanks.html</span>"&gt;
+                        </code>
+                    </div>
+                </div>
+
+                <div id="tab-security" class="tab-content p-8 hidden">
+                    <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+                        <code class="bg-indigo-50 text-indigo-700 px-2 py-1 rounded">_honeypot</code> パラメータ
+                    </h3>
+                    <p class="text-slate-600 mb-6 leading-relaxed">
+                        ユーザーには見えない隠しフィールド。ボットがこの値を埋めて送信した場合、システムはスパムとして扱い、静かに処理を破棄します。
+                    </p>
+                    <div class="bg-slate-900 rounded-xl p-6 overflow-x-auto">
+                        <code class="text-indigo-300">
+                            &lt;input type="text" name="<span class="text-emerald-400">_honeypot</span>" style="display:none" tabindex="-1"&gt;
+                        </code>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Quick Setup -->
+    <section id="get-started" class="py-24 bg-white border-t border-slate-100">
+        <div class="max-w-7xl mx-auto px-4">
+            <h2 class="text-4xl font-bold mb-16 text-center">わずか数ステップで運用開始</h2>
+            <div class="grid md:grid-cols-2 gap-12">
+                <div class="space-y-8">
+                    <div class="flex gap-6">
+                        <div class="flex-shrink-0 w-12 h-12 bg-indigo-600 text-white rounded-full flex items-center justify-center font-bold text-lg">1</div>
+                        <div>
+                            <h3 class="text-xl font-bold mb-2">サーバーの準備</h3>
+                            <p class="text-slate-600 mb-4">Python環境でリポジトリをクローンし、必要なライブラリをインストールします。</p>
+                            <div class="bg-slate-900 rounded-xl p-4 font-mono text-sm text-indigo-300">
+                                pip install bottle peewee jinja2 itsdangerous
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex gap-6">
+                        <div class="flex-shrink-0 w-12 h-12 bg-indigo-600 text-white rounded-full flex items-center justify-center font-bold text-lg">2</div>
+                        <div>
+                            <h3 class="text-xl font-bold mb-2">起動と設定</h3>
+                            <p class="text-slate-600 mb-4">`main.py` を実行して起動。管理画面にアクセスし、最初のフォームIDを作成します。</p>
+                            <div class="bg-slate-900 rounded-xl p-4 font-mono text-sm text-indigo-300">
+                                python main.py
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-slate-900 rounded-[2rem] p-8 shadow-2xl relative overflow-hidden group">
+                    <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 to-purple-500"></div>
+                    <h3 class="text-white font-bold mb-6 flex items-center justify-between">
+                        <span>HTMLに埋め込むだけ</span>
+                        <span class="text-xs text-slate-400 font-normal">sample.html</span>
+                    </h3>
+                    <div class="font-mono text-sm space-y-2 text-indigo-300">
+                        <p>&lt;form action="<span class="text-emerald-400">https://your-api.com/api/form</span>" method="POST"&gt;</p>
+                        <p class="ml-4 text-slate-500 italic">&lt;!-- フォームを識別するID --&gt;</p>
+                        <p class="ml-4">&lt;input type="hidden" name="<span class="text-emerald-400">form_id</span>" value="<span class="text-amber-300">CONTACT_01</span>"&gt;</p>
+                        <p class="ml-4 text-slate-500 italic">&lt;!-- 送信後の戻り先 --&gt;</p>
+                        <p class="ml-4">&lt;input type="hidden" name="<span class="text-emerald-400">_next</span>" value="..."&gt;</p>
+                        <br>
+                        <p class="ml-4">&lt;input type="text" name="name" placeholder="お名前"&gt;</p>
+                        <p class="ml-4">&lt;button type="submit"&gt;送信&lt;/button&gt;</p>
+                        <p>&lt;/form&gt;</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-slate-50 py-12 px-4 border-t border-slate-200">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center text-slate-500 text-sm">
+            <div class="mb-4 md:mb-0">
+                &copy; 2026 FormRelay OSS. MIT License.
+            </div>
+            <div class="flex gap-8">
+                <a href="https://github.com/live/FormRelay-OSS" class="hover:text-indigo-600 transition font-medium">GitHub Repository</a>
+                <a href="#" class="hover:text-indigo-600 transition font-medium">Documentation</a>
+                <a href="#" class="hover:text-indigo-600 transition font-medium">Contact</a>
+            </div>
+        </div>
+    </footer>
+
+    <script src="assets/js/main.js"></script>
+</body>
+</html>

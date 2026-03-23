@@ -20,6 +20,7 @@ class FormConfig(BaseModel):
     enable_email_notification = BooleanField(default=True)
     success_url = CharField(null=True)
     cancel_url = CharField(null=True)
+    require_japanese = BooleanField(default=False)
     validation_rules = TextField(null=True)  # JSON形式で保存
     is_active = BooleanField(default=True)
     created_at = DateTimeField(default=datetime.datetime.now)
@@ -31,6 +32,7 @@ class Submission(BaseModel):
     ip_address = CharField()
     user_agent = TextField()
     is_spam = BooleanField(default=False)
+    is_deleted = BooleanField(default=False)
     created_at = DateTimeField(default=datetime.datetime.now)
 
 class Attachment(BaseModel):

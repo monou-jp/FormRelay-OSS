@@ -31,11 +31,12 @@ def setup_admin_routes(app):
             token = generate_session_token(user.id)
             response.set_cookie(config.SESSION_NAME, token, max_age=3600*24, path='/', httponly=True)
             logger.info(f"User logged in: {username}")
-            return redirect('/')
+            # リダイレクトをここから移動
         else:
             logger.warning(f"Login failed for user: {username}")
+            return render_template('login.html', error='Invalid username or password')
         
-        return render_template('login.html', error='Invalid username or password')
+        return redirect('/')
 
     @app.get('/logout')
     def logout():
@@ -84,15 +85,20 @@ def setup_admin_routes(app):
         page = int(request.query.decode().get('page', 1))
         form_id = request.query.decode().get('form_id')
         status = request.query.decode().get('status')
+        if status is None:
+            status = 'exclude_spam'
         q = request.query.getunicode('q')
         
-        query = Submission.select().join(FormConfig)
+        query = Submission.select().join(FormConfig).where(Submission.is_deleted == False)
         
         if form_id:
             query = query.where(FormConfig.form_id == form_id)
         
         if status:
-            query = query.where(Submission.status == status)
+            if status == 'exclude_spam':
+                query = query.where(Submission.status != 'spam')
+            else:
+                query = query.where(Submission.status == status)
             
         if q:
             query = query.where(Submission.data.contains(q))
@@ -112,6 +118,57 @@ def setup_admin_routes(app):
                                current_status=status,
                                q=q)
 
+    @app.post('/submissions/bulk-update')
+    @login_required
+    def bulk_update_submissions():
+        submission_ids = request.forms.getall('submission_ids')
+        action = request.forms.getunicode('action')
+        
+        if not submission_ids:
+            return redirect('/submissions?error=No submissions selected')
+        
+        count = 0
+        success_msg = None
+        error_msg = None
+        try:
+            if action == 'delete':
+                query = Submission.update(is_deleted=True).where(Submission.id << submission_ids)
+                count = query.execute()
+            elif action == 'spam':
+                query = Submission.update(status='spam', is_spam=True).where(Submission.id << submission_ids)
+                count = query.execute()
+                # 履歴も追加（オプションだが丁寧）
+                for sub_id in submission_ids:
+                    StatusHistory.create(
+                        submission=sub_id,
+                        old_status='unknown',
+                        new_status='spam',
+                        note='Bulk update to spam',
+                        created_by=request.user
+                    )
+            elif action.startswith('status:'):
+                new_status = action.split(':')[1]
+                query = Submission.update(status=new_status, is_spam=(new_status == 'spam')).where(Submission.id << submission_ids)
+                count = query.execute()
+                for sub_id in submission_ids:
+                    StatusHistory.create(
+                        submission=sub_id,
+                        old_status='unknown',
+                        new_status=new_status,
+                        note='Bulk status update',
+                        created_by=request.user
+                    )
+            
+            success_msg = f'Updated {count} submissions'
+        except Exception as e:
+            logger.error(f"Bulk update failed: {str(e)}")
+            error_msg = f'Update failed: {str(e)}'
+            
+        if success_msg:
+            return redirect(f'/submissions?success={success_msg}')
+        else:
+            return redirect(f'/submissions?error={error_msg}')
+
     @app.get('/submissions/<id:int>')
     @login_required
     def submission_detail(id):
@@ -119,9 +176,6 @@ def setup_admin_routes(app):
         try:
             sub = Submission.get_by_id(id)
         except Submission.DoesNotExist:
-            pass
-
-        if not sub:
             return redirect('/submissions')
             
         data = json.loads(sub.data)
@@ -180,9 +234,9 @@ def setup_admin_routes(app):
                 
             redirect_url = f'/submissions/{id}?success=Status updated'
         except Submission.DoesNotExist:
-            redirect_url = '/submissions?error=Submission not found'
+            return redirect('/submissions?error=Submission not found')
         except Exception as e:
-            redirect_url = f'/submissions/{id}?error=Update failed: {str(e)}'
+            return redirect(f'/submissions/{id}?error=Update failed: {str(e)}')
         
         return redirect(redirect_url)
 
@@ -223,7 +277,7 @@ def setup_admin_routes(app):
             else:
                 redirect_url = f'/submissions/{id}?error=Resend failed: {error_msg}'
         except Exception as e:
-            redirect_url = f'/submissions/{id}?error=Resend error: {str(e)}'
+            return redirect(f'/submissions/{id}?error=Resend error: {str(e)}')
         
         return redirect(redirect_url)
 
@@ -258,6 +312,7 @@ def setup_admin_routes(app):
         enable_email_notification = request.forms.get('enable_email_notification') == 'on'
         success_url = request.forms.getunicode('success_url')
         cancel_url = request.forms.getunicode('cancel_url')
+        require_japanese = request.forms.get('require_japanese') == 'on'
         validation_rules = request.forms.getunicode('validation_rules')
         is_active = request.forms.get('is_active') == 'on'
 
@@ -271,6 +326,7 @@ def setup_admin_routes(app):
             'enable_email_notification': enable_email_notification,
             'success_url': success_url,
             'cancel_url': cancel_url,
+            'require_japanese': require_japanese,
             'validation_rules': validation_rules,
             'is_active': is_active
         }
@@ -287,7 +343,7 @@ def setup_admin_routes(app):
                 FormConfig.create(**data)
                 redirect_url = '/forms?success=New form created'
         except Exception as e:
-            redirect_url = f'/forms?error=Save failed: {str(e)}'
+            return redirect(f'/forms?error=Save failed: {str(e)}')
         
         return redirect(redirect_url)
 
@@ -315,9 +371,9 @@ def setup_admin_routes(app):
             cfg.delete_instance()
             redirect_url = '/forms?success=Form and all related data deleted'
         except FormConfig.DoesNotExist:
-            redirect_url = '/forms?error=Form not found'
+            return redirect('/forms?error=Form not found')
         except Exception as e:
-            redirect_url = f'/forms?error=Delete failed: {str(e)}'
+            return redirect(f'/forms?error=Delete failed: {str(e)}')
         
         return redirect(redirect_url)
 
@@ -345,7 +401,7 @@ def setup_admin_routes(app):
                 )
                 redirect_url = '/users?success=User added successfully'
             except Exception as e:
-                redirect_url = f'/users?error=Failed to add user: {str(e)}'
+                return redirect(f'/users?error=Failed to add user: {str(e)}')
         
         return redirect(redirect_url)
 
@@ -362,7 +418,7 @@ def setup_admin_routes(app):
             status = "activated" if u.is_active else "deactivated"
             redirect_url = f'/users?success=User {u.username} {status}'
         except Exception as e:
-            redirect_url = f'/users?error=Operation failed: {str(e)}'
+            return redirect(f'/users?error=Operation failed: {str(e)}')
         
         return redirect(redirect_url)
 
@@ -379,7 +435,7 @@ def setup_admin_routes(app):
             u.save()
             redirect_url = f'/users?success=Password reset for {u.username}'
         except Exception as e:
-            redirect_url = f'/users?error=Failed to reset password: {str(e)}'
+            return redirect(f'/users?error=Failed to reset password: {str(e)}')
         
         return redirect(redirect_url)
 

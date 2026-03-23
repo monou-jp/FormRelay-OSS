@@ -24,7 +24,7 @@
                     {% for key, val in data.items() %}
                     <tr>
                         <th class="bg-light" style="width: 200px;">{{ key }}</th>
-                        <td>{{ val or '' }}</td>
+                        <td style="white-space: pre-wrap;">{{ val or '' }}</td>
                     </tr>
                     {% endfor %}
                 </table>

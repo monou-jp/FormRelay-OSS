@@ -18,11 +18,12 @@
             </div>
             <div class="col-md-3">
                 <select name="status" class="form-select">
-                    <option value="">All Statuses</option>
+                    <option value="exclude_spam" {% if current_status == 'exclude_spam' %}selected{% endif %}>Exclude Spam</option>
+                    <option value="" {% if current_status == '' %}selected{% endif %}>All Statuses</option>
                     <option value="new" {% if current_status == 'new' %}selected{% endif %}>New</option>
                     <option value="in_progress" {% if current_status == 'in_progress' %}selected{% endif %}>In Progress</option>
                     <option value="completed" {% if current_status == 'completed' %}selected{% endif %}>Completed</option>
-                    <option value="spam" {% if current_status == 'spam' %}selected{% endif %}>Spam</option>
+                    <option value="spam" {% if current_status == 'spam' %}selected{% endif %}>Spam Only</option>
                 </select>
             </div>
             <div class="col-md-3">
@@ -37,10 +38,31 @@
 </div>
 
 <div class="card">
+    <form action="/submissions/bulk-update" method="POST" id="bulk-form">
+    <div class="card-header bg-white py-3">
+        <div class="row align-items-center">
+            <div class="col-auto">
+                <div class="input-group input-group-sm">
+                    <select name="action" class="form-select" style="width: auto;">
+                        <option value="">Bulk Actions...</option>
+                        <option value="delete">Delete (Soft)</option>
+                        <option value="spam">Mark as Spam</option>
+                        <option value="status:new">Set Status: New</option>
+                        <option value="status:in_progress">Set Status: In Progress</option>
+                        <option value="status:completed">Set Status: Completed</option>
+                    </select>
+                    <button class="btn btn-outline-secondary" type="submit" onclick="return confirm('Apply this action to selected items?')">Apply</button>
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="table-responsive">
         <table class="table table-hover align-middle mb-0">
             <thead class="table-light">
                 <tr>
+                    <th style="width: 40px;">
+                        <input type="checkbox" class="form-check-input" id="check-all">
+                    </th>
                     <th>Date</th>
                     <th>Form</th>
                     <th>Summary</th>
@@ -51,6 +73,9 @@
             <tbody>
                 {% for sub in submissions %}
                 <tr>
+                    <td>
+                        <input type="checkbox" name="submission_ids" value="{{ sub.id }}" class="form-check-input sub-checkbox">
+                    </td>
                     <td>{{ sub.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
                     <td><span class="badge bg-secondary">{{ sub.form.name }}</span></td>
                     <td class="text-truncate" style="max-width: 300px;">{{ sub.data or '' }}</td>
@@ -67,6 +92,7 @@
             </tbody>
         </table>
     </div>
+    </form>
     {% if total_pages > 1 %}
     <div class="card-footer bg-white">
         <nav>
@@ -81,4 +107,41 @@
     </div>
     {% endif %}
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const checkAll = document.getElementById('check-all');
+    const checkboxes = document.querySelectorAll('.sub-checkbox');
+    const bulkForm = document.getElementById('bulk-form');
+
+    if (checkAll) {
+        checkAll.addEventListener('change', function() {
+            checkboxes.forEach(cb => {
+                cb.checked = checkAll.checked;
+            });
+        });
+    }
+
+    if (bulkForm) {
+        bulkForm.addEventListener('submit', function(e) {
+            const checkedCount = document.querySelectorAll('.sub-checkbox:checked').length;
+            const action = bulkForm.querySelector('select[name="action"]').value;
+            
+            if (checkedCount === 0) {
+                alert('Please select at least one submission.');
+                e.preventDefault();
+                return;
+            }
+            
+            if (!action) {
+                alert('Please select an action.');
+                e.preventDefault();
+                return;
+            }
+        });
+    }
+});
+</script>
 {% endblock %}

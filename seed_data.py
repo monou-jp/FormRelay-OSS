@@ -72,7 +72,7 @@ def seed_data():
     # 5. Submissionデータの投入 (各フォームに数件ずつ)
     submission_templates = {
         'contact-form': [
-            {'name': '田中 太郎', 'company_name': '株式会社サンプル', 'email': 'tanaka@example.jp', 'message': '製品の導入を検討しています。見積もりをお願いします。'},
+            {'name': '田中 太郎', 'company_name': '株式会社サンプル', 'email': 'tanaka@example.jp', 'message': '製品の導入を検討しています。\n\n見積もりをお願いします。'},
             {'name': '佐藤 花子', 'company_name': 'Sample Inc.', 'email': 'sato@example.com', 'message': 'APIの仕様について詳しく教えてください。'},
             {'name': '鈴木 一郎', 'company_name': 'テスト株式会社', 'email': 'suzuki@test.co.jp', 'message': 'デモ環境の貸し出しは可能でしょうか？'}
         ],

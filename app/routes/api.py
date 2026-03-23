@@ -17,7 +17,9 @@ def setup_api_routes(app):
         response.headers['Access-Control-Allow-Headers'] = 'Origin, Accept, Content-Type, X-Requested-With'
 
     @app.route('/api/form', method=['POST', 'OPTIONS'])
-    def handle_form_submission():
+    @app.route('/form/<form_id_path>', method=['POST', 'OPTIONS'])
+    @app.route('/f/<form_id_path>', method=['POST', 'OPTIONS'])
+    def handle_form_submission(form_id_path=None):
         if request.method == 'OPTIONS':
             return {}
 
@@ -44,7 +46,8 @@ def setup_api_routes(app):
         for key in request.forms.keys():
             form_data[key] = request.forms.getunicode(key)
 
-        form_id = form_data.get('form_id')
+        # form_id は パス、POSTボディ、またはクエリパラメータから取得可能にする
+        form_id = form_id_path or form_data.get('form_id') or request.query.get('form_id')
         if not form_id:
             logger.warning(f"Submission rejected: Missing form_id from IP {ip}. Data: {json.dumps(form_data, ensure_ascii=False)}")
             return HTTPResponse(status=400, body=json.dumps({"error": "form_id is required"}), content_type='application/json')
@@ -69,6 +72,39 @@ def setup_api_routes(app):
                 logger.warning(f"Submission rejected: reCAPTCHA verification failed for form_id {form_id} from IP {ip}. Data: {json.dumps(form_data, ensure_ascii=False)}")
                 return HTTPResponse(status=400, body=json.dumps({"error": "reCAPTCHA verification failed"}), content_type='application/json')
 
+        # 7.5 日本語含有チェック (設定が有効な場合)
+        if cfg.require_japanese:
+            import re
+            has_japanese = False
+            # ひらがな、カタカナ、漢字が含まれているかチェック
+            jp_pattern = re.compile(r'[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF]')
+            for val in form_data.values():
+                if val and isinstance(val, str) and jp_pattern.search(val):
+                    has_japanese = True
+                    break
+            
+            if not has_japanese:
+                # データの整理
+                cleaned_data = {k: v for k, v in form_data.items() if not k.startswith('_') and k != 'form_id' and k != 'g-recaptcha-response'}
+                # DB保存 (スパムとして)
+                submission = Submission.create(
+                    form=cfg,
+                    data=json.dumps(cleaned_data, ensure_ascii=False),
+                    ip_address=ip,
+                    user_agent=ua,
+                    status='spam',
+                    is_spam=True
+                )
+                logger.info(f"Spam detected (No Japanese) for form_id {form_id} from IP {ip}. Submission ID: {submission.id}")
+                
+                # リダイレクト
+                redirect_url = form_data.get('_next') or cfg.success_url
+                if redirect_url:
+                    response.status = 303
+                    response.set_header('Location', redirect_url)
+                    return
+                return {"status": "success", "message": "Thank you for your submission."}
+
         # 8. Honeypotチェック
         if form_data.get('_honeypot'):
             # データの整理 (システム用フィールドを除去)
@@ -86,6 +122,13 @@ def setup_api_routes(app):
 
             # スパムとして扱うが、表向きは200を返すか、静かに無視
             logger.info(f"Honeypot triggered for form_id {form_id} from IP {ip}. Submission ID: {submission.id}")
+            
+            # リダイレクト
+            redirect_url = form_data.get('_next') or cfg.success_url
+            if redirect_url:
+                response.status = 303
+                response.set_header('Location', redirect_url)
+                return
             return {"status": "success", "message": "Thank you for your submission."}
 
         # 9. バリデーション (カスタム必須項目など)

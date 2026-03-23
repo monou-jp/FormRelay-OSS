@@ -21,6 +21,15 @@ def init_db():
     db.connect()
     db.create_tables([User, FormConfig, Submission, Attachment, MailLog, StatusHistory, RateLimit])
     
+    # マイグレーションの実行
+    try:
+        from migrate_db import run_migrations
+        run_migrations()
+    except ImportError:
+        logger.warning("Migration script not found.")
+    except Exception as e:
+        logger.error(f"Migration failed: {e}")
+
     # 初期管理者の作成 (存在しない場合)
     from app.utils.auth import hash_password
     if User.select().count() == 0:

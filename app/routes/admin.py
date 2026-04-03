@@ -199,7 +199,7 @@ def setup_admin_routes(app):
             old_status = sub.status
             new_status = request.forms.getunicode('status')
             note = request.forms.getunicode('note')
-            notify_change = request.forms.get('notify_change') == 'on'
+            notify_change = request.forms.decode().get('notify_change') == 'on'
             
             if old_status != new_status or note:
                 sub.status = new_status
@@ -302,19 +302,19 @@ def setup_admin_routes(app):
     @app.post('/forms/save')
     @admin_required
     def save_form():
-        id = request.forms.get('id')
+        id = request.forms.decode().get('id')
         form_id = request.forms.getunicode('form_id')
         name = request.forms.getunicode('name')
         notify_email = request.forms.getunicode('notify_email')
         allowed_domains = request.forms.getunicode('allowed_domains')
         subject_template = request.forms.getunicode('subject_template')
         body_template = request.forms.getunicode('body_template')
-        enable_email_notification = request.forms.get('enable_email_notification') == 'on'
+        enable_email_notification = request.forms.decode().get('enable_email_notification') == 'on'
         success_url = request.forms.getunicode('success_url')
         cancel_url = request.forms.getunicode('cancel_url')
-        require_japanese = request.forms.get('require_japanese') == 'on'
+        require_japanese = request.forms.decode().get('require_japanese') == 'on'
         validation_rules = request.forms.getunicode('validation_rules')
-        is_active = request.forms.get('is_active') == 'on'
+        is_active = request.forms.decode().get('is_active') == 'on'
 
         data = {
             'form_id': form_id,
@@ -389,7 +389,7 @@ def setup_admin_routes(app):
     def add_user():
         username = request.forms.getunicode('username')
         password = request.forms.getunicode('password')
-        role = request.forms.get('role')
+        role = request.forms.decode().get('role')
         
         redirect_url = '/users'
         if username and password:

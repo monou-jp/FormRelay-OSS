@@ -42,9 +42,12 @@ def setup_api_routes(app):
                  return HTTPResponse(status=403, body=json.dumps({"error": "Bot detected or UA missing"}), content_type='application/json')
 
         # 4. データの取得 (UTF-8 decode対応)
+        # Bottleのrequest.forms.keys()はエンコーディングによっては文字化けするため、decode()を使用して取得する
+        decoded_forms = request.forms.decode('utf-8')
         form_data = {}
-        for key in request.forms.keys():
-            form_data[key] = request.forms.getunicode(key)
+        for key in decoded_forms.keys():
+            # values()もデコード済みだが、念のためgetunicodeを使用する
+            form_data[key] = decoded_forms.getunicode(key)
 
         # form_id は パス、POSTボディ、またはクエリパラメータから取得可能にする
         form_id = form_id_path or form_data.get('form_id') or request.query.get('form_id')

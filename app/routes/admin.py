@@ -83,6 +83,8 @@ def setup_admin_routes(app):
     @login_required
     def list_submissions():
         page = int(request.query.decode().get('page', 1))
+        per_page = int(request.query.decode().get('per_page', config.PER_PAGE))
+        view_mode = request.query.decode().get('view_mode', 'standard')
         form_id = request.query.decode().get('form_id')
         status = request.query.decode().get('status')
         if status is None:
@@ -104,14 +106,16 @@ def setup_admin_routes(app):
             query = query.where(Submission.data.contains(q))
             
         total_count = query.count()
-        submissions = query.order_by(Submission.created_at.desc()).paginate(page, config.PER_PAGE)
-        total_pages = (total_count + config.PER_PAGE - 1) // config.PER_PAGE
+        submissions = query.order_by(Submission.created_at.desc()).paginate(page, per_page)
+        total_pages = (total_count + per_page - 1) // per_page
         
         forms = FormConfig.select()
         
         return render_template('submissions_list.html', 
                                submissions=submissions, 
                                page=page, 
+                               per_page=per_page,
+                               view_mode=view_mode,
                                total_pages=total_pages,
                                forms=forms,
                                current_form_id=form_id,
@@ -146,6 +150,31 @@ def setup_admin_routes(app):
                         note='Bulk update to spam',
                         created_by=request.user
                     )
+            elif action == 'recheck_spam':
+                from ..utils.security import is_spam_content
+                for sub_id in submission_ids:
+                    try:
+                        sub = Submission.get_by_id(sub_id)
+                        data = json.loads(sub.data)
+                        is_spam, reason = is_spam_content(data, sub.form)
+                        
+                        new_status = 'spam' if is_spam else 'new'
+                        if sub.status != new_status:
+                            old_status = sub.status
+                            sub.status = new_status
+                            sub.is_spam = is_spam
+                            sub.save()
+                            
+                            StatusHistory.create(
+                                submission=sub,
+                                old_status=old_status,
+                                new_status=new_status,
+                                note=f'Re-checked spam: {reason}' if is_spam else 'Re-checked: Not spam',
+                                created_by=request.user
+                            )
+                            count += 1
+                    except Exception as e:
+                        logger.error(f"Error re-checking submission {sub_id}: {e}")
             elif action.startswith('status:'):
                 new_status = action.split(':')[1]
                 query = Submission.update(status=new_status, is_spam=(new_status == 'spam')).where(Submission.id << submission_ids)
@@ -282,6 +311,27 @@ def setup_admin_routes(app):
         return redirect(redirect_url)
 
     # --- Form Config ---
+    @app.post('/submissions/<id:int>/mark-spam')
+    @login_required
+    def mark_as_spam(id):
+        try:
+            sub = Submission.get_by_id(id)
+            sub.status = 'spam'
+            sub.is_spam = True
+            sub.save()
+            
+            StatusHistory.create(
+                submission=sub,
+                old_status='unknown',
+                new_status='spam',
+                note='Marked as spam from list',
+                created_by=request.user
+            )
+            
+            return redirect('/submissions?success=Marked as spam')
+        except Submission.DoesNotExist:
+            return redirect('/submissions?error=Submission not found')
+
     @app.get('/forms')
     @admin_required
     def list_forms():

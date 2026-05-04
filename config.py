@@ -75,3 +75,10 @@ LOG_FILE = os.path.join(BASE_DIR, 'data', 'app.log')
 
 # バックアップ設定
 BACKUP_INTERVAL_HOURS = 24  # バックアップを実行する間隔 (時間)
+
+# スパム対策設定
+SPAM_CHECK_MIN_JP_CHARS = 3    # 日本語を含む必要がある場合、最低何文字必要か
+SPAM_CHECK_MAX_URLS = 3        # メッセージ内に許可する最大URL数
+SPAM_CHECK_NG_WORDS = [        # NGワードリスト
+    'casino', 'viagra', 'poker', 'porn', 'lottery', 'inheritance', 'bank account'
+]

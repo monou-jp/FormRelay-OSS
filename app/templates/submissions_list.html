@@ -29,6 +29,19 @@
             <div class="col-md-3">
                 <input type="text" name="q" class="form-control" placeholder="Search data..." value="{{ q or '' }}">
             </div>
+            <div class="col-md-1">
+                <select name="per_page" class="form-select">
+                    {% for n in [20, 50, 100] %}
+                    <option value="{{ n }}" {% if per_page == n %}selected{% endif %}>{{ n }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select name="view_mode" class="form-select">
+                    <option value="standard" {% if view_mode == 'standard' %}selected{% endif %}>Standard View</option>
+                    <option value="detailed" {% if view_mode == 'detailed' %}selected{% endif %}>Detailed View</option>
+                </select>
+            </div>
             <div class="col-auto">
                 <button type="submit" class="btn btn-primary">Filter</button>
                 <a href="/submissions" class="btn btn-outline-secondary">Clear</a>
@@ -38,8 +51,8 @@
 </div>
 
 <div class="card">
-    <form action="/submissions/bulk-update" method="POST" id="bulk-form">
     <div class="card-header bg-white py-3">
+        <form action="/submissions/bulk-update" method="POST" id="bulk-form">
         <div class="row align-items-center">
             <div class="col-auto">
                 <div class="input-group input-group-sm">
@@ -47,6 +60,7 @@
                         <option value="">Bulk Actions...</option>
                         <option value="delete">Delete (Soft)</option>
                         <option value="spam">Mark as Spam</option>
+                        <option value="recheck_spam">Re-check Spam</option>
                         <option value="status:new">Set Status: New</option>
                         <option value="status:in_progress">Set Status: In Progress</option>
                         <option value="status:completed">Set Status: Completed</option>
@@ -55,6 +69,7 @@
                 </div>
             </div>
         </div>
+        </form>
     </div>
     <div class="table-responsive">
         <table class="table table-hover align-middle mb-0">
@@ -74,32 +89,63 @@
                 {% for sub in submissions %}
                 <tr>
                     <td>
-                        <input type="checkbox" name="submission_ids" value="{{ sub.id }}" class="form-check-input sub-checkbox">
+                        <input type="checkbox" name="submission_ids" value="{{ sub.id }}" class="form-check-input sub-checkbox" form="bulk-form">
                     </td>
                     <td>{{ sub.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
                     <td><span class="badge bg-secondary">{{ sub.form.name }}</span></td>
-                    <td class="text-truncate" style="max-width: 300px;">{{ sub.data or '' }}</td>
+                    <td style="max-width: 400px;">
+                        {% set data = sub.data | from_json %}
+                        {% if data.subject or data.name or data.email or data.Email or data.Name %}
+                            <strong>{{ data.subject or data.name or data.email or data.Email or data.Name }}</strong>
+                            {% if view_mode == 'detailed' %}
+                                <div class="mt-2 small text-muted">
+                                    {% for k, v in data.items() %}
+                                        {% if k|lower not in ['subject', 'name', 'email'] %}
+                                            <div class="mb-1" style="white-space: pre-wrap; word-break: break-all;"><strong>{{ k }}:</strong> {{ v }}</div>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <small class="text-muted d-block text-truncate">
+                                    {% for k, v in data.items() %}
+                                        {% if k|lower not in ['subject', 'name', 'email'] %}
+                                            {{ k }}: {{ v }} 
+                                        {% endif %}
+                                    {% endfor %}
+                                </small>
+                            {% endif %}
+                        {% else %}
+                            {{ sub.data or '' }}
+                        {% endif %}
+                    </td>
                     <td>
                         <span class="badge {% if sub.status == 'new' %}bg-primary{% elif sub.status == 'in_progress' %}bg-warning text-dark{% elif sub.status == 'spam' %}bg-danger{% else %}bg-success{% endif %}">
                             {{ sub.status }}
                         </span>
                     </td>
                     <td>
-                        <a href="/submissions/{{ sub.id }}" class="btn btn-sm btn-outline-primary">View</a>
+                        <div class="btn-group">
+                            <a href="/submissions/{{ sub.id }}" class="btn btn-sm btn-outline-primary">View</a>
+                            {% if sub.status != 'spam' %}
+                            <button type="submit" form="spam-form-{{ sub.id }}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Mark as spam?')">Spam</button>
+                            {% endif %}
+                        </div>
+                        {% if sub.status != 'spam' %}
+                        <form action="/submissions/{{ sub.id }}/mark-spam" method="POST" id="spam-form-{{ sub.id }}" style="display: none;"></form>
+                        {% endif %}
                     </td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
-    </form>
     {% if total_pages > 1 %}
     <div class="card-footer bg-white">
         <nav>
             <ul class="pagination justify-content-center mb-0">
                 {% for p in range(1, total_pages + 1) %}
                 <li class="page-item {% if p == page %}active{% endif %}">
-                    <a class="page-link" href="?page={{ p }}{% if current_form_id %}&form_id={{ current_form_id }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}{% if q %}&q={{ q }}{% endif %}">{{ p }}</a>
+                    <a class="page-link" href="?page={{ p }}{% if current_form_id %}&form_id={{ current_form_id }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}{% if q %}&q={{ q }}{% endif %}{% if per_page %}&per_page={{ per_page }}{% endif %}{% if view_mode %}&view_mode={{ view_mode }}{% endif %}">{{ p }}</a>
                 </li>
                 {% endfor %}
             </ul>

@@ -79,3 +79,36 @@ def check_user_agent(ua):
         if kw in ua_lower:
             return False
     return True
+
+def is_spam_content(form_data, cfg=None):
+    """
+    コンテンツの内容からスパムかどうかを判定する
+    """
+    import re
+    
+    # 判定に使用するテキストを抽出（システムフィールド以外）
+    all_text = " ".join([str(v) for k, v in form_data.items() if not k.startswith('_')])
+    
+    # 1. 日本語含有チェック (設定が有効な場合)
+    require_japanese = cfg.require_japanese if cfg else False
+    if require_japanese:
+        # ひらがな、カタカナ、漢字の範囲
+        jp_chars = re.findall(r'[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF]', all_text)
+        min_jp = getattr(config, 'SPAM_CHECK_MIN_JP_CHARS', 3)
+        if len(jp_chars) < min_jp:
+            return True, f"Too few Japanese characters ({len(jp_chars)} < {min_jp})"
+            
+    # 2. URL数のチェック
+    urls = re.findall(r'https?://[^\s<>"]+|www\.[^\s<>"]+', all_text)
+    max_urls = getattr(config, 'SPAM_CHECK_MAX_URLS', 3)
+    if len(urls) > max_urls:
+        return True, f"Too many URLs ({len(urls)} > {max_urls})"
+        
+    # 3. NGワードチェック
+    ng_words = getattr(config, 'SPAM_CHECK_NG_WORDS', [])
+    all_text_lower = all_text.lower()
+    for word in ng_words:
+        if word.lower() in all_text_lower:
+            return True, f"Contains NG word: {word}"
+            
+    return False, ""

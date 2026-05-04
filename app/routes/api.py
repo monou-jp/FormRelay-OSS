@@ -4,7 +4,7 @@ import os
 import uuid
 import datetime
 from ..models.schema import FormConfig, Submission, Attachment
-from ..utils.security import check_rate_limit, validate_origin, verify_recaptcha, is_blacklisted_ip, check_user_agent
+from ..utils.security import check_rate_limit, validate_origin, verify_recaptcha, is_blacklisted_ip, check_user_agent, is_spam_content
 from ..utils.email import send_email
 from ..utils.logger import logger
 import config
@@ -75,38 +75,29 @@ def setup_api_routes(app):
                 logger.warning(f"Submission rejected: reCAPTCHA verification failed for form_id {form_id} from IP {ip}. Data: {json.dumps(form_data, ensure_ascii=False)}")
                 return HTTPResponse(status=400, body=json.dumps({"error": "reCAPTCHA verification failed"}), content_type='application/json')
 
-        # 7.5 日本語含有チェック (設定が有効な場合)
-        if cfg.require_japanese:
-            import re
-            has_japanese = False
-            # ひらがな、カタカナ、漢字が含まれているかチェック
-            jp_pattern = re.compile(r'[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF]')
-            for val in form_data.values():
-                if val and isinstance(val, str) and jp_pattern.search(val):
-                    has_japanese = True
-                    break
+        # 7.5 スパムコンテンツチェック (日本語含有、URL数、NGワード)
+        is_spam, reason = is_spam_content(form_data, cfg)
+        if is_spam:
+            # データの整理
+            cleaned_data = {k: v for k, v in form_data.items() if not k.startswith('_') and k != 'form_id' and k != 'g-recaptcha-response'}
+            # DB保存 (スパムとして)
+            submission = Submission.create(
+                form=cfg,
+                data=json.dumps(cleaned_data, ensure_ascii=False),
+                ip_address=ip,
+                user_agent=ua,
+                status='spam',
+                is_spam=True
+            )
+            logger.info(f"Spam detected ({reason}) for form_id {form_id} from IP {ip}. Submission ID: {submission.id}")
             
-            if not has_japanese:
-                # データの整理
-                cleaned_data = {k: v for k, v in form_data.items() if not k.startswith('_') and k != 'form_id' and k != 'g-recaptcha-response'}
-                # DB保存 (スパムとして)
-                submission = Submission.create(
-                    form=cfg,
-                    data=json.dumps(cleaned_data, ensure_ascii=False),
-                    ip_address=ip,
-                    user_agent=ua,
-                    status='spam',
-                    is_spam=True
-                )
-                logger.info(f"Spam detected (No Japanese) for form_id {form_id} from IP {ip}. Submission ID: {submission.id}")
-                
-                # リダイレクト
-                redirect_url = form_data.get('_next') or cfg.success_url
-                if redirect_url:
-                    response.status = 303
-                    response.set_header('Location', redirect_url)
-                    return
-                return {"status": "success", "message": "Thank you for your submission."}
+            # リダイレクト
+            redirect_url = form_data.get('_next') or cfg.success_url
+            if redirect_url:
+                response.status = 303
+                response.set_header('Location', redirect_url)
+                return
+            return {"status": "success", "message": "Thank you for your submission."}
 
         # 8. Honeypotチェック
         if form_data.get('_honeypot'):

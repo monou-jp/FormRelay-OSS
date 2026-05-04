@@ -64,6 +64,7 @@
                 <tr>
                     <th>Date</th>
                     <th>Form</th>
+                    <th>Summary</th>
                     <th>Status</th>
                     <th>IP Address</th>
                     <th>Action</th>
@@ -74,6 +75,21 @@
                 <tr>
                     <td>{{ sub.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
                     <td><span class="badge bg-secondary">{{ sub.form.name }}</span></td>
+                    <td style="max-width: 400px;">
+                        {% set data = sub.data | from_json %}
+                        {% if data.subject or data.name or data.email or data.Email or data.Name %}
+                            <strong>{{ data.subject or data.name or data.email or data.Email or data.Name }}</strong>
+                            <small class="text-muted d-block" style="white-space: pre-wrap; word-break: break-all;">
+                                {% for k, v in data.items() %}
+                                    {% if k|lower not in ['subject', 'name', 'email'] %}
+                                        <div class="mb-1"><strong>{{ k }}:</strong> {{ v }}</div>
+                                    {% endif %}
+                                {% endfor %}
+                            </small>
+                        {% else %}
+                            {{ sub.data or '' }}
+                        {% endif %}
+                    </td>
                     <td>
                         <span class="badge {% if sub.status == 'new' %}bg-primary{% elif sub.status == 'in_progress' %}bg-warning text-dark{% else %}bg-success{% endif %}">
                             {{ sub.status }}
@@ -81,7 +97,15 @@
                     </td>
                     <td>{{ sub.ip_address }}</td>
                     <td>
-                        <a href="/submissions/{{ sub.id }}" class="btn btn-sm btn-outline-primary">View</a>
+                        <div class="btn-group">
+                            <a href="/submissions/{{ sub.id }}" class="btn btn-sm btn-outline-primary">View</a>
+                            {% if sub.status != 'spam' %}
+                            <button type="submit" form="spam-form-{{ sub.id }}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Mark as spam?')">Spam</button>
+                            {% endif %}
+                        </div>
+                        {% if sub.status != 'spam' %}
+                        <form action="/submissions/{{ sub.id }}/mark-spam" method="POST" id="spam-form-{{ sub.id }}" style="display: none;"></form>
+                        {% endif %}
                     </td>
                 </tr>
                 {% endfor %}

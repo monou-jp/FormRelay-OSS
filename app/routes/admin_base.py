@@ -13,6 +13,16 @@ def render_template(template_name, **kwargs):
     # ここではカスタムのヘルパーを定義
     from jinja2 import Environment, FileSystemLoader
     env = Environment(loader=FileSystemLoader(template_path))
+    
+    # JSON文字列をパースするフィルターを追加
+    def from_json(value):
+        import json
+        try:
+            return json.loads(value)
+        except (ValueError, TypeError):
+            return {}
+    env.filters['from_json'] = from_json
+    
     template = env.get_template(template_name)
     
     # 共通変数を注入

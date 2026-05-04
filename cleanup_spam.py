@@ -1,20 +1,14 @@
 import json
-import re
 from app.models.base import db
 from app.models.schema import Submission, FormConfig
+from app.utils.security import is_spam_content
 
 def cleanup_spam(target_all=False):
     """
-    既存の送信データから日本語が含まれないものをスパムとしてマークします。
-    
-    :param target_all: Trueの場合、FormConfigの require_japanese 設定に関わらず全ての送信をチェックします。
-                       Falseの場合、require_japanese が有効なフォームの送信のみチェックします。
+    既存の送信データからスパムと思われるものをマークします。
     """
     if db.is_closed():
         db.connect()
-    
-    # ひらがな、カタカナ、漢字のパターン
-    jp_pattern = re.compile(r'[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF]')
     
     if target_all:
         query = Submission.select().where(Submission.status != 'spam')
@@ -36,18 +30,14 @@ def cleanup_spam(target_all=False):
         except json.JSONDecodeError:
             continue
 
-        has_japanese = False
-        for val in data.values():
-            if val and isinstance(val, str) and jp_pattern.search(val):
-                has_japanese = True
-                break
+        is_spam, reason = is_spam_content(data, sub.form)
         
-        if not has_japanese:
+        if is_spam:
             sub.status = 'spam'
             sub.is_spam = True
             sub.save()
             updated_count += 1
-            print(f"  [Marked as Spam] Submission ID: {sub.id} (Form: {sub.form.name})")
+            print(f"  [Marked as Spam] Submission ID: {sub.id} (Form: {sub.form.name}) - Reason: {reason}")
 
     print(f"\nScan completed.")
     print(f"Total checked: {total_checked}")

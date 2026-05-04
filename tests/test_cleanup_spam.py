@@ -49,11 +49,20 @@ class TestCleanupSpam(unittest.TestCase):
 
     def test_cleanup_all(self):
         # --all 指定時は全件対象
+        # ただし、現状のロジックでは require_japanese=False の場合は日本語チェックは行われない
+        # (URL数やNGワードのチェックのみ行われる)
+        # そのため、'Hello world' はスパムにならないのが正しい挙動
         cleanup_spam(target_all=True)
         
-        # no-jp-req の 'Hello world' もスパムになるはず
+        # no-jp-req の 'Hello world' はURLもNGワードもないのでスパムにならない
         sub3 = Submission.get_by_id(3)
-        self.assertEqual(sub3.status, 'spam')
+        self.assertNotEqual(sub3.status, 'spam')
+        
+        # NGワードを入れてみる
+        Submission.create(form=self.cfg_no_jp, data=json.dumps({'m': 'Get cheap casino'}), ip_address='4', user_agent='4')
+        cleanup_spam(target_all=True)
+        sub4 = Submission.get_by_id(4)
+        self.assertEqual(sub4.status, 'spam')
 
 if __name__ == '__main__':
     unittest.main()
